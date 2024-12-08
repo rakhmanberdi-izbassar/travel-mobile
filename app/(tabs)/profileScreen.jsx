@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -9,11 +9,28 @@ import {
 } from 'react-native'
 import MapView from 'react-native-maps'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { firebaseApp } from './../../configs/firebaseConfig' // Firebase конфигін импорттау
 
 export default function ProfileScreen() {
   const router = useRouter()
-  const navigation = useNavigation()
+
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const auth = getAuth(firebaseApp)
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user) // Егер қолданушы болса, оның мәліметтерін сақтаймыз
+      } else {
+        router.push('/auth/sign-in') // Қолданушы жүйеге кірмесе, логин бетіне бағыттаймыз
+      }
+    })
+
+    return () => unsubscribe() // Cleanup функциясы
+  }, [])
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -24,21 +41,25 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Профиль суреті */}
       <Image
         style={styles.profileImage}
         source={{
           uri: 'https://i.pinimg.com/736x/c0/74/9b/c0749b7cc401421662ae901ec8f9f660.jpg',
         }}
       />
-      <Text style={styles.profileName}>Rakhmanberdi Izbassar</Text>
-      <Text style={styles.profileEmail}>rakhmanberdi2003@gmail.com</Text>
 
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() => navigation.navigate('EditProfile')}
-      >
-        <Text style={styles.editButtonText}>Edit Profile</Text>
-      </TouchableOpacity>
+      {/* Профиль мәліметтері */}
+      {user ? (
+        <>
+          <Text style={styles.profileName}>
+            {user.displayName || 'Undefined'}
+          </Text>
+          <Text style={styles.profileEmail}>{user.email || 'Undefined'}</Text>
+        </>
+      ) : (
+        <Text>Қолданушы мәліметтері жүктелуде...</Text>
+      )}
 
       <ScrollView style={styles.optionsContainer}>
         <TouchableOpacity

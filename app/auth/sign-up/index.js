@@ -9,15 +9,33 @@ import {
   Alert,
 } from 'react-native'
 import { useRouter } from 'expo-router'
-import firebaseConfig from './../../../configs/firebaseConfig'
+
+// Firebase қызметтерін дұрыс импорттау
+import { auth, db } from './../../../configs/firebaseConfig'
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { doc, getDoc, setDoc, collection } from 'firebase/firestore'
 
 export default function Register() {
   const router = useRouter()
-  const [name, onChangeName] = React.useState('')
+  const [username, onChangeUsername] = React.useState('') // Логинді алу
   const [email, onChangeEmail] = React.useState('')
   const [password, onChangePassword] = React.useState('')
   const [confirmPassword, onChangeConfirmPassword] = React.useState('')
-
+  const addUser = async (userData) => {
+    try {
+      const userRef = doc(collection(db, 'users')) // Автоматты түрде ID жасайды
+      const newUser = { id: userRef.id, ...userData } // ID-ді мәліметтерге қосу
+      await setDoc(userRef, newUser)
+      console.log('User added:', newUser)
+    } catch (error) {
+      console.error('Error adding user:', error)
+    }
+  }
+  const checkIfUsernameExists = async (username) => {
+    const userRef = doc(db, 'users', username)
+    const userSnap = await getDoc(userRef)
+    return userSnap.exists() // Егер логин бар болса, true қайтарады
+  }
   // Тіркеу функциясы
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -26,10 +44,39 @@ export default function Register() {
     }
 
     try {
-      await firebaseConfig
-        .auth()
-        .createUserWithEmailAndPassword(email, password)
-      Alert.alert('Тіркелу сәтті өтті!', `${name}, қош келдіңіз!`)
+      // Логиннің қайталанбауын тексереміз
+      const usernameExists = await checkIfUsernameExists(username)
+      if (usernameExists) {
+        Alert.alert(
+          'Қате',
+          'Бұл логин бұрыннан қолданылып жатыр. Басқа логин таңдаңыз.'
+        )
+        return
+      }
+
+      // Firebase арқылы пайдаланушыны тіркеу
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      )
+
+      // Тіркелген қолданушының атын сақтаймыз
+      await updateProfile(userCredential.user, {
+        displayName: username,
+      })
+
+      // Пайдаланушыны Firestore-ға сақтау
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        username: username,
+        email: email,
+        createdAt: new Date(),
+      })
+
+      Alert.alert('Тіркелу сәтті өтті!', `${username}, қош келдіңіз!`)
+
+      // Тіркелу сәтті болғанда басты бетке бағыттау
+      router.replace('/homeScreen')
     } catch (error) {
       Alert.alert('Қате', error.message)
     }
@@ -46,9 +93,9 @@ export default function Register() {
       <Text style={styles.register}>Register</Text>
       <TextInput
         style={styles.input}
-        onChangeText={onChangeName}
-        value={name}
-        placeholder="Full Name"
+        onChangeText={onChangeUsername}
+        value={username}
+        placeholder="Username"
       />
       <TextInput
         style={styles.input}

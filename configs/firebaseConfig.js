@@ -1,8 +1,12 @@
-import firebase from 'firebase/compat/app'
-import 'firebase/compat/auth'
-import 'firebase/compat/database'
-import 'firebase/compat/storage'
+// firebaseConfig.js
+import { initializeApp } from 'firebase/app'
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth'
+import { getDatabase } from 'firebase/database'
+import { getFirestore } from 'firebase/firestore' // Firestore импорттау
+import { getStorage } from 'firebase/storage'
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage'
 
+// Firebase конфигурациясы
 const firebaseConfig = {
   apiKey: 'AIzaSyAgqFsNr6J0yAMpct1SOgyHb22PFHcozco',
   authDomain: 'travel-221e6.firebaseapp.com',
@@ -12,14 +16,17 @@ const firebaseConfig = {
   appId: '1:564175648857:android:e0f501aec3de4c28965948',
 }
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig)
-} else {
-  firebase.app() // Use the default app if already initialized
-}
+// Firebase инициализациясы
+const app = initializeApp(firebaseConfig)
 
-const auth = firebase.auth()
-const database = firebase.database()
-const storage = firebase.storage()
+// Firebase аутентификациясын AsyncStorage-пен инициализациялау
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+})
 
-export { firebase, auth, database, storage }
+// Firebase қызметтеріне қолжетімділік
+const database = getDatabase(app)
+const storage = getStorage(app)
+const db = getFirestore(app) // Firestore инициализациясы
+
+export { auth, database, storage, db } // Firestore-ды экспорттау

@@ -18,6 +18,23 @@ import * as SplashScreen from 'expo-splash-screen'
 const GOOGLE_MAPS_APIKEY = 'AIzaSyDF5zEFAyLSJmwJaPLFI1U9O2Mrc6AYR_A'
 
 export default function MapsScreen() {
+  const reverseGeocode = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_APIKEY}`
+      )
+      const data = await response.json()
+      if (data.results && data.results.length > 0) {
+        return data.results[0].formatted_address // Нақты мекенжайды қайтару
+      } else {
+        return 'Unknown location' // Егер мекенжай табылмаса
+      }
+    } catch (error) {
+      console.error('Error during reverse geocoding:', error)
+      return 'Error fetching location'
+    }
+  }
+
   const [mapRegion, setMapRegion] = useState({
     latitude: 43.214422,
     longitude: 76.871302,

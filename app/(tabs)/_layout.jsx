@@ -1,54 +1,56 @@
 import React from 'react'
-import { Tabs } from 'expo-router'
+import { NavigationContainer } from '@react-navigation/native' // NavigationContainer импорттау
+import AuthProvider from './../context/AuthProvider' // AuthProvider импорттау
+import { Tabs } from 'expo-router' // Tabs импорттау
 import { Ionicons } from '@expo/vector-icons'
 
-const _layout = () => {
-  console.log('kdnc')
+export default function RootLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Tabs.Screen
-        name="homeScreen"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="uploadScreen"
-        options={{
-          title: 'Upload',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cloud-upload" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profileScreen"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      {/* <Tabs.Screen name="../dont_see/mapsScreen" options={{ title: 'Maps' }} /> */}
-    </Tabs>
+    <NavigationContainer>
+      <AuthProvider>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Tabs.Screen
+            name="homeScreen"
+            options={{
+              title: 'Home',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="search"
+            options={{
+              title: 'Search',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="search-outline" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="uploadScreen"
+            options={{
+              title: 'Upload',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="cloud-upload" size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="profileScreen"
+            options={{
+              title: 'Profile',
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="person-outline" size={size} color={color} />
+              ),
+            }}
+          />
+        </Tabs>
+      </AuthProvider>
+    </NavigationContainer>
   )
 }
-
-export default _layout

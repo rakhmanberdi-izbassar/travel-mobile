@@ -1,33 +1,36 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
   StyleSheet,
   Image,
-  TextInput,
   ScrollView,
   TouchableOpacity,
-  FlatList,
 } from 'react-native'
-import { getFirestore, collection, getDocs } from 'firebase/firestore'
-import { db } from '../../configs/firebaseConfig' // Firebase конфигурациясын импорттаңыз
+import { database } from './../../configs/firebaseConfig'
+import { ref as dbRef, onValue } from 'firebase/database'
 
 export default function HomeScreen() {
-  const [routes, setRoutes] = useState([])
+  const [uploads, setUploads] = useState([])
 
-  // Firebase-тен маршруттарды алу
   useEffect(() => {
-    const fetchRoutes = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, 'routes'))
-        const routesList = querySnapshot.docs.map((doc) => doc.data())
-        setRoutes(routesList)
-      } catch (error) {
-        console.error('Маршруттарды алу қателігі: ', error)
-      }
-    }
+    const uploadsRef = dbRef(database, 'uploads/')
 
-    fetchRoutes()
+    const unsubscribe = onValue(uploadsRef, (snapshot) => {
+      const data = snapshot.val()
+
+      if (data) {
+        const formattedData = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }))
+        setUploads(formattedData)
+      } else {
+        setUploads([])
+      }
+    })
+
+    return () => unsubscribe()
   }, [])
 
   return (
@@ -38,70 +41,49 @@ export default function HomeScreen() {
         <Text style={styles.headerSubtitle}>Choose your favorite place</Text>
       </View>
 
-      {/* Search Box */}
-      <View style={styles.searchBox}>
-        <TextInput placeholder="Search" style={styles.searchInput} />
-      </View>
-
       {/* Featured Image */}
-      <View style={styles.featured}>
-        <Image
-          source={{
-            uri: 'https://www.gov.kz/uploads/2023/4/5/02aa6e81ed05465f446bb1ecefa0647d_original.280018.jpg',
-          }}
-          style={styles.featuredImage}
-        />
-        <View style={styles.featuredTextContainer}>
-          <Text style={styles.featuredTitle}>Explore your beauty</Text>
-          <Text style={styles.featuredSubtitle}>
-            Get special offers and discounts
-          </Text>
-        </View>
-      </View>
-
-      {/* Categories */}
-      <View style={styles.categories}>
-        <TouchableOpacity
-          style={[styles.categoryButton, styles.activeCategory]}
-        >
-          <Text style={styles.categoryText}>🏖️ Beach</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}>
-          <Text style={styles.categoryText}>⛰️ Mountain</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}>
-          <Text style={styles.categoryText}>🏙️ City</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Маршруттар тізімі */}
-      <View style={styles.recommendedHeader}>
-        <Text style={styles.recommendedTitle}>Your Saved Routes</Text>
-      </View>
-
-      {/* Маршруттарды көрсететін FlatList */}
-      <FlatList
-        data={routes}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
+      {uploads.map((upload) => (
+        <View key={upload.id} style={styles.featured}>
+          {upload.imageUrl && (
             <Image
-              source={{
-                uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSD6imEjlLHfuQUDISYrglv1eCD3qKRkc8iEA&s',
-              }}
-              style={styles.cardImage}
+              source={{ uri: upload.imageUrl }}
+              style={styles.featuredImage}
             />
-            <Text style={styles.cardTitle}>
-              From: {item.origin.latitude}, {item.origin.longitude}
+          )}
+          <Text style={styles.cardTitle}>{upload.title}</Text>
+          <Text style={styles.cardLocation}>{upload.description}</Text>
+          {/* <View style={styles.featuredTextContainer}>
+            <Text style={styles.featuredTitle}>Explore your beauty</Text>
+            <Text style={styles.featuredSubtitle}>
+              Get special offers and discounts
             </Text>
-            {item.destinations.map((destination, idx) => (
-              <Text key={idx} style={styles.cardLocation}>
-                To: {destination.latitude}, {destination.longitude}
-              </Text>
-            ))}
+          </View> */}
+        </View>
+      ))}
+      {/* Recommended Section */}
+      <View style={styles.recommendedHeader}>
+        <Text style={styles.recommendedTitle}>Recommended</Text>
+        <Text style={styles.seeAll}>See All</Text>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.recommended}
+      >
+        {uploads.map((upload) => (
+          <View key={upload.id} style={styles.card}>
+            {upload.imageUrl && (
+              <Image
+                source={{ uri: upload.imageUrl }}
+                style={styles.cardImage}
+              />
+            )}
+            <Text style={styles.cardTitle}>{upload.title}</Text>
+            <Text style={styles.cardLocation}>{upload.description}</Text>
           </View>
-        )}
-      />
+        ))}
+      </ScrollView>
     </ScrollView>
   )
 }
@@ -123,19 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     marginBottom: 20,
-  },
-  searchBox: {
-    backgroundColor: '#f1f1f1',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
   },
   featured: {
     position: 'relative',
@@ -161,24 +130,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
   },
-  categories: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  categoryButton: {
-    backgroundColor: '#f1f1f1',
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  activeCategory: {
-    backgroundColor: '#4C9AFF',
-  },
-  categoryText: {
-    fontSize: 14,
-    color: '#fff',
-  },
   recommendedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -188,6 +139,10 @@ const styles = StyleSheet.create({
   recommendedTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  seeAll: {
+    fontSize: 14,
+    color: '#4C9AFF',
   },
   recommended: {
     flexDirection: 'row',

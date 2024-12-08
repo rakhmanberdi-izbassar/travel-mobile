@@ -9,7 +9,9 @@ import {
   Alert,
 } from 'react-native'
 import { useRouter } from 'expo-router'
-import firebase from './../../../configs/firebaseConfig'
+
+import { auth } from './../../../configs/firebaseConfig' // Firebase конфигурациясын импорттау
+import { signInWithEmailAndPassword } from 'firebase/auth'
 
 export default function Login() {
   const router = useRouter()
@@ -19,8 +21,11 @@ export default function Login() {
   // Логин функциясы
   const handleLogin = async () => {
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password)
-      Alert.alert('Кіру сәтті өтті!', 'Сіз жүйеге кірдіңіз!')
+      // auth объектісін қолдану
+      await signInWithEmailAndPassword(auth, email, password)
+
+      // Кіру сәтті болғанда басты бетке бағыттау
+      router.replace('/homeScreen')
     } catch (error) {
       Alert.alert('Қате', error.message)
     }
